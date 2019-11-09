@@ -1,3 +1,89 @@
+# Producthunt
+
+
+
+### Part 1 Signup
+
+1. accounts urls.py
+
+```python
+from django.urls import path
+from . import views
+
+
+
+urlpatterns=[
+    path('signup/',views.signup,name='signup'),
+    path('login/',views.login,name='login'),
+    path('logout/',views.logout,name='logout'),
+]
+```
+
+2. producthunt src urls.py
+
+
+```python
+
+from django.contrib import admin
+from django.urls import path,include
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('',include('products.urls')),
+    path('accounts/',include('accounts.urls')),
+]
+
+urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+```
+
+
+
+3. Accounts/signup.html
+
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h2>Sign Up</h2>
+
+    {% if error %}
+        {{ error }}
+    {% endif %}
+
+
+    <form method="post" action="{% url 'signup' %}">
+
+     {% csrf_token %}
+
+        Username:
+     <input type="text" name="username"/>
+
+        <hr>
+        Password:
+    <input type="password" name="password1">
+        <hr>
+        Confirm Password:
+    <input type="password" name="password2">
+
+        <input class="btn btn-primary" type="submit" value="Sign Up">
+
+    </form>
+
+{% endblock %}
+
+```
+
+
+
+4. base.html
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,3 +140,10 @@
 
 </body>
 </html>
+```
+
+
+
+
+### Login
+
