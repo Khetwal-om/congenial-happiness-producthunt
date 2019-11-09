@@ -147,3 +147,212 @@ urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.S
 
 ### Login
 
+
+1. login.html
+
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h2>Login</h2>
+
+    {% if error %}
+        {{ error }}
+    {% endif %}
+
+
+    <form method="post" action="{% url 'homepage' %}">
+
+     {% csrf_token %}
+
+        Username:
+     <input type="text" name="username"/>
+
+        <hr>
+        Password:
+    <input type="password" name="password"/>
+        <hr>
+
+        <input class="btn btn-primary" type="submit" value="Login">
+
+    </form>
+
+{% endblock %}
+
+```
+
+
+
+2. Login view in accounts/views.py
+
+
+```python
+from django.shortcuts import render,redirect
+from django.contrib.auth.models import User
+from django.contrib import auth
+
+
+
+def login(request):
+    if request.method=='POST':
+        user=auth.authenticate(username=request.POST['username'],password=request.POST['password'])
+        if user is not None:
+            auth.login(request,user)
+            return redirect('homepage')
+        else:
+            return render(request,'accounts/login.html',{'error':'wrong pass or username'})
+
+    return render(request,'accounts/login.html',{})
+
+```
+
+
+3. 
+
+
+
+
+
+
+
+
+
+### Creating the Product
+
+1. Product model
+
+```python
+from django.db import models
+
+from django.contrib.auth.models import User
+
+class Product(models.Model):
+    title=models.CharField(max_length=200)
+    pub_date=models.DateTimeField()
+    body=models.TextField()
+    url=models.TextField()
+    image=models.ImageField(upload_to='images/')
+    icon=models.ImageField(upload_to='images/')
+    votes_total=models.IntegerField(default=1)
+    hunter=models.ForeignKey(User,on_delete=models.CASCADE)
+
+
+    def __str__(self):
+        return self.title
+
+    def summary(self):
+        return self.body[:100]
+
+    def pub_date_pretty(self):
+        return self.pub_date.strftime('%b %e %Y')
+```
+
+
+2. settings.py  and urls.py add media
+
+```python
+
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR,'static'),
+]
+
+
+MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+MEDIA_URL = '/media/'
+
+STATIC_ROOT=os.path.join(BASE_DIR,)
+STATIC_URL = '/static/'
+
+```
+
+
+```python
+
+urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+```
+
+
+
+3. Create.html
+
+
+```html
+
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <h1>create page</h1>
+
+    <form method="POST" action="{% url 'create' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+
+        title:
+    <input type="text" name="title">
+    <hr>
+
+     body:
+    <input type="text" name="body">
+    <hr>
+    Url
+    <input type="text" name="url">
+    <hr>
+
+
+    <input type="file" name="icon">
+    <hr>
+
+    Image
+    <input type="file" name="image">
+    <hr>
+
+
+
+        <input class="btn btn-primary" type="submit" value="create">
+    </form>
+
+
+{% endblock %}
+```
+
+4. Createview
+
+
+
+```python
+from django.shortcuts import render,redirect
+from django.contrib.auth.decorators import login_required
+from .models import Product
+from django.utils import timezone
+
+
+def homepage(request):
+    return render(request,'products/home.html')
+
+
+@login_required
+def create(request):
+    if request.method=='POST':
+        if request.POST['title'] and request.POST['body'] and request.POST['url'] and request.FILES['icon'] and request.FILES['image']:
+            product=Product()
+            product.title=request.POST['title']
+            product.body=request.POST['body']
+            if request.POST['url'].startswith('http://') or request.POST['url'].startswith('https://'):
+                product.url=request.POST['url']
+            else:
+                product.url='http://'+request.POST['title']
+            product.icon=request.FILES['icon']
+            product.image = request.FILES['image']
+            product.pub_date=timezone.datetime.now()
+            product.hunter=request.user
+            product.save()
+            return redirect('homepage')
+
+        else:
+            return render(request,'products/create.html',{'error':'Something is missing'})
+    else:
+        return render(request,'products/create.html')
+```

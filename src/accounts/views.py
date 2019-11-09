@@ -22,9 +22,25 @@ def signup(request):
 
 
 def login(request):
+    if request.method=='POST':
+        user=auth.authenticate(username=request.POST['username'],password=request.POST['password'])
+        if user is not None:
+            auth.login(request,user)
+            print('*******************')
+            print('I am logged in')
+            print('*******************')
+            return redirect('homepage')
+        else:
+            print("*************")
+            print("I am somewhere else")
+            print("*************")
+            return render(request,'accounts/login.html',{'error':'wrong pass or username'})
+
     return render(request,'accounts/login.html',{})
 
 
 
 def logout(request):
-    return render(request,'accounts/signup.html',{})
+    if request.method=='POST':
+        auth.logout(request)
+        return redirect('homepage')
